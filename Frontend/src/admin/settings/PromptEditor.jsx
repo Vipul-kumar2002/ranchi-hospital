@@ -10,6 +10,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import axios from "axios";
+// ✅ Import the dynamic API URL
+import { API_BASE_URL } from "../../config";
 
 const PromptEditor = () => {
   const [prompt, setPrompt] = useState("");
@@ -20,8 +22,9 @@ const PromptEditor = () => {
   useEffect(() => {
     const fetchPrompt = async () => {
       try {
+        // ✅ Uses the dynamic API_BASE_URL
         const res = await axios.get(
-          "http://localhost:8000/api/admin/settings/hospital-info",
+          `${API_BASE_URL}/api/admin/settings/hospital-info`,
         );
         if (res.data.success && res.data.hospital.custom_prompt) {
           setPrompt(res.data.hospital.custom_prompt);
@@ -36,13 +39,13 @@ const PromptEditor = () => {
   }, []);
 
   const handleSave = async () => {
-    // Prevent multiple clicks
     if (status === "saving") return;
 
     try {
       setStatus("saving");
+      // ✅ Uses the dynamic API_BASE_URL
       const res = await axios.post(
-        "http://localhost:8000/api/admin/settings/update-prompt",
+        `${API_BASE_URL}/api/admin/settings/update-prompt`,
         {
           prompt,
         },
@@ -51,13 +54,11 @@ const PromptEditor = () => {
       if (res.data.success) {
         setStatus("success");
         setIsEditing(false);
-        // Reset status back to idle after 3 seconds
         setTimeout(() => setStatus("idle"), 3000);
       }
     } catch (err) {
       console.error("Save Error:", err);
       setStatus("error");
-      // Keep error visible for 5 seconds
       setTimeout(() => setStatus("idle"), 5000);
     }
   };
@@ -176,14 +177,12 @@ const PromptEditor = () => {
         )}
       </div>
 
-      {/* SUCCESS MESSAGE */}
       {status === "success" && (
         <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-2xl flex gap-3 items-center text-teal-400 text-[11px] font-bold animate-in slide-in-from-top-2">
           <CheckCircle size={16} /> PostgreSQL Synced: AI rules are now live.
         </div>
       )}
 
-      {/* ERROR MESSAGE */}
       {status === "error" && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex gap-3 items-center text-red-400 text-[11px] font-bold animate-in slide-in-from-top-2">
           <AlertCircle size={16} /> Sync Failed: Could not connect to the Ranchi

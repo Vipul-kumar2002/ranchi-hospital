@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Key, Save, CheckCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
+// ✅ Step 1: Import the dynamic API URL
+import { API_BASE_URL } from "../../config";
 
 const ApiKeySettings = () => {
   const [apiKey, setApiKey] = useState("");
@@ -14,10 +16,13 @@ const ApiKeySettings = () => {
 
     try {
       setStatus("saving");
-      // 🔥 Points to your running Port 8000
-      const response = await axios.post("http://localhost:8000/api/admin/settings/api-key", { 
-        apiKey 
-      });
+      // ✅ Step 2: Use API_BASE_URL instead of localhost:8000
+      const response = await axios.post(
+        `${API_BASE_URL}/api/admin/settings/api-key`,
+        {
+          apiKey,
+        },
+      );
 
       if (response.data.success) {
         setStatus("success");
@@ -32,8 +37,12 @@ const ApiKeySettings = () => {
   return (
     <div className="p-10 max-w-2xl space-y-8 animate-in fade-in duration-700">
       <div>
-        <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Gemini API Key</h1>
-        <p className="text-slate-500 text-sm mt-1">Configuring AI credentials for Ranchi City Hospital node.</p>
+        <h1 className="text-4xl font-black text-white tracking-tighter uppercase">
+          Gemini API Key
+        </h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Configuring AI credentials for Ranchi City Hospital node.
+        </p>
       </div>
 
       <div className="bg-white/[0.03] border border-white/10 p-8 rounded-3xl space-y-6">
@@ -54,16 +63,29 @@ const ApiKeySettings = () => {
           onClick={handleSave}
           disabled={status === "saving"}
           className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all ${
-            status === "success" ? "bg-teal-600 text-white" : "bg-blue-600 hover:bg-blue-500 text-white"
+            status === "success"
+              ? "bg-teal-600 text-white"
+              : "bg-blue-600 hover:bg-blue-500 text-white"
           }`}
         >
-          {status === "saving" ? "WRITING TO POSTGRES..." : status === "success" ? <>SAVED TO DATABASE <CheckCircle size={18}/></> : <>SAVE CONFIGURATION <Save size={18} /></>}
+          {status === "saving" ? (
+            "WRITING TO POSTGRES..."
+          ) : status === "success" ? (
+            <>
+              SAVED TO DATABASE <CheckCircle size={18} />
+            </>
+          ) : (
+            <>
+              SAVE CONFIGURATION <Save size={18} />
+            </>
+          )}
         </button>
       </div>
 
       {status === "error" && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex gap-3 items-center text-red-400 text-xs">
-          <AlertCircle size={16} /> Error connecting to the database. Is the server running?
+          <AlertCircle size={16} /> Error connecting to the database. Is the
+          server running?
         </div>
       )}
     </div>

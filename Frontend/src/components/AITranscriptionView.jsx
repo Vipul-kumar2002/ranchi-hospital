@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import jsPDF from "jspdf";
+// ✅ Import the dynamic API URL
+import { API_BASE_URL } from "../config";
 
 const AITranscriptionView = () => {
   const location = useLocation();
@@ -33,14 +35,12 @@ const AITranscriptionView = () => {
       }, 280);
 
       try {
-        const response = await fetch(
-          "http://localhost:8000/api/ai/transcribe",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ images: capturedImages }),
-          },
-        );
+        // ✅ UPDATED: Now uses the dynamic API_BASE_URL
+        const response = await fetch(`${API_BASE_URL}/api/ai/transcribe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: capturedImages }),
+        });
 
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
@@ -53,7 +53,6 @@ const AITranscriptionView = () => {
         let aiObj = {};
         try {
           let rawText = data.transcription;
-          // Strip markdown if AI included it
           if (typeof rawText === "string") {
             const match = rawText.match(/\{[\s\S]*\}/);
             aiObj = JSON.parse(match ? match[0] : rawText);
@@ -65,7 +64,7 @@ const AITranscriptionView = () => {
           throw new Error("AI returned invalid format. Please try again.");
         }
 
-        // ── STEP 2: Map to Clean Structure (No personal defaults) ──
+        // ── STEP 2: Map to Clean Structure ──
         const safe = (val, fallback = "Not Mentioned") => {
           return val &&
             val !== "" &&
@@ -129,7 +128,7 @@ const AITranscriptionView = () => {
     URL.revokeObjectURL(url);
   };
 
-  // ── PDF BUILDER (Images + AI Summary Page) ──
+  // ── PDF BUILDER ──
   const buildCombinedPDF = async (images, patientData, jsonData) => {
     const pdf = new jsPDF("p", "mm", "a4");
     const W = 210;
@@ -141,10 +140,9 @@ const AITranscriptionView = () => {
     });
 
     pdf.addPage();
-    pdf.setFillColor(8, 18, 35); // Dark Theme for AI page
+    pdf.setFillColor(8, 18, 35);
     pdf.rect(0, 0, W, H, "F");
 
-    // Header
     pdf.setFillColor(37, 99, 235);
     pdf.rect(0, 0, W, 22, "F");
     pdf.setTextColor(255, 255, 255);
@@ -152,13 +150,11 @@ const AITranscriptionView = () => {
     pdf.setFont("helvetica", "bold");
     pdf.text("RANCHI CITY HOSPITAL", 14, 14);
 
-    // AI Badge
     pdf.setFillColor(16, 185, 129);
     pdf.roundedRect(155, 6, 42, 10, 5, 5, "F");
     pdf.setFontSize(8);
     pdf.text("AI TRANSCRIPTION", 158, 12.5);
 
-    // Patient Info Block
     pdf.setFillColor(15, 30, 60);
     pdf.roundedRect(10, 28, W - 20, 22, 4, 4, "F");
     pdf.setTextColor(148, 163, 184);
@@ -173,7 +169,6 @@ const AITranscriptionView = () => {
     pdf.text(jsonData.patientId || "—", 70, 44);
     pdf.text(new Date().toLocaleDateString("en-IN"), 140, 44);
 
-    // Section Helper
     const sectionTitle = (label, y) => {
       pdf.setFillColor(37, 99, 235);
       pdf.rect(10, y, 3, 8, "F");
@@ -182,7 +177,6 @@ const AITranscriptionView = () => {
       pdf.text(label.toUpperCase(), 16, y + 6);
     };
 
-    // Vitals
     sectionTitle("Clinical Vitals", 58);
     const cd = jsonData.clinicalData;
     const drawVital = (label, value, x, y, width) => {
@@ -201,7 +195,6 @@ const AITranscriptionView = () => {
     drawVital("Blood Group", cd.bloodGroup, 10 + colW + 2, 70, colW);
     drawVital("Haemoglobin", cd.hemoglobin, 10 + (colW + 2) * 2, 70, colW);
 
-    // Medicines
     sectionTitle("Prescribed Medicines", 95);
     if (jsonData.medicine.length === 0) {
       pdf.setTextColor(148, 163, 184);
@@ -221,7 +214,6 @@ const AITranscriptionView = () => {
       });
     }
 
-    // Advice & Notes
     const notesY = 105 + Math.max(jsonData.medicine.length, 1) * 16 + 10;
     sectionTitle("Clinical Notes", notesY);
     const notes = [

@@ -21,6 +21,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
+// ✅ Step 1: Import the dynamic API URL
+import { API_BASE_URL } from "../config";
 
 const PrescriptionCanvas = () => {
   const navigate = useNavigate();
@@ -53,18 +55,16 @@ const PrescriptionCanvas = () => {
       try {
         setLoading(true);
 
-        // 1. Fetch current config from your Backend
+        // ✅ Step 2: Use API_BASE_URL instead of localhost:8000
         const settingsRes = await fetch(
-          "http://localhost:8000/api/admin/settings/hospital-info",
+          `${API_BASE_URL}/api/admin/settings/hospital-info`,
         );
         const settingsData = await settingsRes.json();
 
-        // 2. Use saved URL from DB or the fallback Postman link
         const activeUrl =
           settingsData.hospital?.patient_source_url ||
           "https://d4c5cce4-b1af-4f81-852b-edd97f9bf7e7.mock.pstmn.io/patients";
 
-        // 3. Fetch patients from that dynamic URL
         const response = await fetch(activeUrl);
         const data = await response.json();
 
@@ -117,27 +117,22 @@ const PrescriptionCanvas = () => {
           tempCanvas.height = CANVAS_HEIGHT;
           const ctx = tempCanvas.getContext("2d");
 
-          // 1. Draw solid white background
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-          // 2. Draw the Header Structure (The yellow circled part)
           ctx.strokeStyle = "#000000";
           ctx.lineWidth = 2;
 
-          // Horizontal divider line
           ctx.beginPath();
           ctx.moveTo(0, HEADER_HEIGHT);
           ctx.lineTo(CANVAS_WIDTH, HEADER_HEIGHT);
           ctx.stroke();
 
-          // Vertical divider line
           ctx.beginPath();
           ctx.moveTo(CANVAS_WIDTH / 2, 0);
           ctx.lineTo(CANVAS_WIDTH / 2, HEADER_HEIGHT);
           ctx.stroke();
 
-          // 3. Draw Branding Text (Column 1)
           ctx.fillStyle = "#000000";
           ctx.font = "bold 20px Arial";
           ctx.fillText("RANCHI CITY", 20, 40);
@@ -148,14 +143,12 @@ const PrescriptionCanvas = () => {
           ctx.font = "10px Arial";
           ctx.fillText(`PAGE NO. ${index + 1} OF ${pages.length}`, 20, 130);
 
-          // 4. Draw Vitals Labels (Column 2)
           ctx.font = "bold 11px Arial";
           ctx.fillText("BP :", 320, 45);
           ctx.fillText("BLOOD GROUP :", 320, 85);
           ctx.fillText("HB :", 320, 125);
 
-          // Draw the underline for vitals
-          ctx.strokeStyle = "#94a3b8"; // slate-400
+          ctx.strokeStyle = "#94a3b8";
           ctx.lineWidth = 0.5;
           const lineStart = 350;
           [45, 85, 125].forEach((yPos) => {
@@ -165,7 +158,6 @@ const PrescriptionCanvas = () => {
             ctx.stroke();
           });
 
-          // 5. Overlay the Doctor's Handwriting
           ctx.drawImage(canvas, 0, 0);
 
           return tempCanvas.toDataURL("image/jpeg", 0.8);
@@ -218,7 +210,6 @@ const PrescriptionCanvas = () => {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // --- RULED LINES (Handwriting area only) ---
       ctx.strokeStyle = "#eff6ff";
       ctx.lineWidth = 1;
       for (let y = HEADER_HEIGHT + 40; y < CANVAS_HEIGHT; y += 35) {
@@ -228,7 +219,6 @@ const PrescriptionCanvas = () => {
         ctx.stroke();
       }
 
-      // --- DRAW HANDWRITING STROKES ---
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       page.strokes.forEach((stroke) => {
@@ -247,13 +237,9 @@ const PrescriptionCanvas = () => {
     renderAll();
   }, [renderAll]);
 
-  // --- CLONE VITALS TO NEXT PAGE LOGIC ---
   const addPage = () => {
     setPages((prev) => {
       const lastPage = prev[prev.length - 1];
-
-      // Extract strokes that are inside the vitals section (Column 2 Header)
-      // and specifically on the right half of the page (x > 300) to keep it clean
       const vitalStrokes = lastPage.strokes.filter((stroke) =>
         stroke.points.some(
           (p) => p.y <= HEADER_HEIGHT && p.x >= CANVAS_WIDTH / 2,
@@ -406,12 +392,10 @@ const PrescriptionCanvas = () => {
               }}
               onPointerUp={() => setIsDrawing(false)}
             >
-              {/* ── 1. HEADER OVERLAY ── */}
               <div
                 className="absolute top-0 left-0 w-full flex border-b-4 border-slate-900 z-20 pointer-events-none"
                 style={{ height: HEADER_HEIGHT }}
               >
-                {/* Column 1: Hospital Branding (pointer-events-auto blocks writing) */}
                 <div className="w-1/2 p-6 border-r-2 border-slate-100 flex flex-col justify-between bg-white pointer-events-auto">
                   <div>
                     <h1 className="font-black text-xl uppercase text-slate-900 leading-tight tracking-tighter">
@@ -433,7 +417,6 @@ const PrescriptionCanvas = () => {
                   </div>
                 </div>
 
-                {/* Column 2: Vitals (pointer-events-none lets writing pass to canvas) */}
                 <div className="w-1/2 bg-slate-50/50 p-6 flex flex-col justify-center gap-6 pointer-events-none">
                   <div className="flex items-end gap-2 w-full">
                     <span className="text-[11px] font-black text-slate-800 uppercase whitespace-nowrap">
@@ -458,7 +441,6 @@ const PrescriptionCanvas = () => {
                 </div>
               </div>
 
-              {/* ── 2. INTERACTIVE CANVAS (Layered between) ── */}
               <canvas
                 ref={(el) => (canvasRefs.current[index] = el)}
                 width={CANVAS_WIDTH}
