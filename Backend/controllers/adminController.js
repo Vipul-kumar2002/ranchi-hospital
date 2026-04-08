@@ -1,4 +1,4 @@
-import Hospital from "../models/Hospital.js";
+import Hospital from "../models/hospital.js";
 
 // 1. Get all hospital settings (Key + Prompt + Patient Source)
 export const getHospitalInfo = async (req, res) => {
