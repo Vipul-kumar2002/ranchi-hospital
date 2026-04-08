@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import Hospital from "../models/Hospital.js";
+import Hospital from "../models/hospital.js";
 
 export const transcribeHandwriting = async (req, res) => {
   const { images } = req.body;
